@@ -80,7 +80,7 @@ class OpeningHook(Scene):
                            font_size=30, color=WHITE).move_to(UP * 1.55)
         clues = equation_pair().move_to(LEFT * 3.55 + DOWN * 0.25)
         self.play(Write(clues_title), Write(clues))
-        self.wait(1.5)
+        self.wait(1.0)  # Place the row-to-row matching animation at 0:23 overall.
 
         guess_label = Text("Try a guess", font=FONT, font_size=25, color=MUTED)
         guess = MathTex(r"(x,y)=(1,3)", font_size=38, color=GOLD)
@@ -99,8 +99,9 @@ class OpeningHook(Scene):
         question = Text("How do we find a pair that satisfies both?", font=FONT,
                         font_size=34, color=CYAN, weight=MEDIUM)
         question.to_edge(DOWN, buff=0.85)
+        self.wait(2.2)  # Hold the failed-guess beat until the question at 0:16.
         self.play(FadeOut(student), FadeIn(question, shift=0.15 * UP))
-        self.wait(18)  # Hold the central question for the spoken hook.
+        self.wait(3)  # Let the closing question land before the next scene.
 
 
 class MatrixForm(Scene):
@@ -109,8 +110,9 @@ class MatrixForm(Scene):
     def construct(self):
         title = heading("From equations to matrix form").to_edge(UP, buff=0.42)
         eqs = equation_pair(0.78).move_to(LEFT * 4.2 + UP * 0.35)
-        self.play(FadeIn(title), Write(eqs))
-        self.wait(1)
+        eq_heading = Text("Equation form", font=FONT, font_size=27, color=CYAN)
+        eq_heading.move_to(LEFT * 4.2 + UP * 1.65)
+        self.play(FadeIn(title), FadeIn(eq_heading), Write(eqs))
 
         matrix = MathTex(
             r"\begin{bmatrix}2&1\\1&-1\end{bmatrix}", r"\begin{bmatrix}x\\y\end{bmatrix}",
@@ -122,14 +124,16 @@ class MatrixForm(Scene):
         matrix[3].set_color(GREEN)
         labels = VGroup(
             MathTex(r"A", color=BLUE, font_size=40),
-            MathTex(r"x", color=GOLD, font_size=40),
+            MathTex(r"\mathbf{x}", color=GOLD, font_size=40),
             MathTex(r"b", color=GREEN, font_size=40),
         )
         labels[0].next_to(matrix[0], DOWN, buff=0.18)
         labels[1].next_to(matrix[1], DOWN, buff=0.18)
         labels[2].next_to(matrix[3], DOWN, buff=0.18)
-        self.play(Write(matrix), FadeIn(labels))
-        self.wait(1.5)
+        mat_heading = Text("Matrix form", font=FONT, font_size=27, color=CYAN)
+        mat_heading.move_to(RIGHT * 2.1 + UP * 1.65)
+        self.play(Write(matrix), FadeIn(labels), FadeIn(mat_heading))
+        self.wait(0.5)
 
         # Pair each equation with the corresponding row of A.
         a_matrix = matrix[0]
@@ -152,6 +156,8 @@ class MatrixForm(Scene):
             self.wait(0.45)
             self.play(FadeOut(eq_box), FadeOut(row_box), FadeOut(connector))
 
+        self.wait(2)  # Preserve the expanded-product start time after moving the row match earlier.
+
         expanded = MathTex(
             r"\begin{bmatrix}2&1\\1&-1\end{bmatrix}", r"\begin{bmatrix}x\\y\end{bmatrix}",
             r"=", r"\begin{bmatrix}2x+y\\x-y\end{bmatrix}", r"=", r"\begin{bmatrix}5\\1\end{bmatrix}",
@@ -164,72 +170,105 @@ class MatrixForm(Scene):
         note = Text("Each row forms one equation; each entry is a coefficient.",
                     font=FONT, font_size=24, color=MUTED).next_to(expanded, DOWN, buff=0.55)
         self.play(TransformMatchingTex(matrix.copy(), expanded), FadeIn(note))
-        self.wait(38)  # Leave room to explain A, x, b, and the row-to-equation mapping.
+        self.wait(24.3)  # Preserve the scene duration after moving the matching beat to 0:23.
 
 
 class VisualIntuition(Scene):
     """Connect the system to intersecting lines and column combinations."""
 
     def construct(self):
-        title = heading("Two pictures of the same solution").to_edge(UP, buff=0.38)
-        self.play(FadeIn(title))
+        # Row picture, algebra first: both equations must hold at once.
+        row_alg_title = heading("Row picture — equations").to_edge(UP, buff=0.4)
+        row_equations = equation_pair(1.0).move_to(UP * 0.65)
+        row_solution = MathTex(r"\text{Solution: }(x,y)=(2,1)", color=CYAN, font_size=40)
+        row_solution.next_to(row_equations, DOWN, buff=0.8)
+        row_note = Text("A solution satisfies both equations simultaneously.",
+                        font=FONT, font_size=27, color=MUTED).next_to(row_solution, DOWN, buff=0.35)
+        self.play(FadeIn(row_alg_title), Write(row_equations), run_time=0.4)
+        self.play(Write(row_solution), FadeIn(row_note), run_time=0.4)
+        self.wait(4.5)
+        self.play(FadeOut(row_alg_title), FadeOut(row_equations), FadeOut(row_solution), FadeOut(row_note), run_time=0.4)
 
-        # Row picture: each equation is a line; their common point solves both.
-        left_title = Text("Row picture: intersecting lines", font=FONT,
-                          font_size=24, color=WHITE)
-        left_title.move_to(LEFT * 3.55 + UP * 2.35)
-        axes = system_axes(width=5.2, height=3.2).move_to(LEFT * 3.5 + DOWN * 0.55)
-        line1 = axes.plot(lambda x: 5 - 2*x, x_range=(-0.3, 3.25), color=BLUE, stroke_width=4)
-        line2 = axes.plot(lambda x: x - 1, x_range=(-0.2, 4.0), color=GOLD, stroke_width=4)
-        l1 = MathTex(r"2x+y=5", color=BLUE, font_size=26)
-        l2 = MathTex(r"x-y=1", color=GOLD, font_size=26)
-        row_legend = VGroup(l1, l2).arrange(RIGHT, buff=0.6)
-        row_legend.move_to(LEFT * 3.5 + UP * 1.65)
-        dot = Dot(axes.c2p(2, 1), radius=0.09, color=CYAN)
-        sol = MathTex(r"(2,1)", color=CYAN, font_size=34).next_to(dot, UR, buff=0.12)
-        self.play(FadeIn(left_title), Create(axes), Create(line1), Create(line2), FadeIn(row_legend))
-        self.play(FadeIn(dot, scale=0.4), Write(sol), Indicate(dot, color=CYAN))
+        # Full-screen row graph. Equal ranges and lengths give equal unit scale.
+        row_title = heading("Row picture — graph").to_edge(UP, buff=0.4)
+        axes = Axes(
+            x_range=(-1, 5, 1), y_range=(-1, 5, 1), x_length=5.0, y_length=5.0,
+            axis_config={"color": MUTED, "stroke_width": 2.2, "include_numbers": True,
+                         "font_size": 22, "include_tip": True}, tips=True,
+        ).move_to(DOWN * 0.8)
+        row_legend = VGroup(
+            MathTex(r"2x+y=5", color=BLUE, font_size=31),
+            MathTex(r"x-y=1", color=GOLD, font_size=31),
+        ).arrange(RIGHT, buff=1.0).move_to(UP * 2.5)
+        line1 = axes.plot(lambda x: 5 - 2*x, x_range=(0.15, 3.0), color=BLUE, stroke_width=5)
+        line2 = axes.plot(lambda x: x - 1, x_range=(0.15, 5.0), color=GOLD, stroke_width=5)
+        point = Dot(axes.c2p(2, 1), radius=0.1, color=CYAN)
+        solution_label = MathTex(r"(2,1)", color=CYAN, font_size=34).next_to(point, UR, buff=0.15)
+        row_caption = Text("The shared point is the solution.", font=FONT,
+                           font_size=25, color=MUTED).to_edge(DOWN, buff=0.22)
+        self.play(FadeIn(row_title), FadeIn(row_legend), Create(axes), Create(line1), Create(line2))
+        self.play(FadeIn(point, scale=0.4), Write(solution_label), Indicate(point, color=CYAN))
+        self.play(FadeIn(row_caption))
+        self.wait(13)  # Hold the row graph so column algebra begins 18 seconds after it.
+        self.play(FadeOut(row_title), FadeOut(row_legend), FadeOut(axes), FadeOut(line1),
+                  FadeOut(line2), FadeOut(point), FadeOut(solution_label), FadeOut(row_caption))
 
-        # Column picture: a1 is doubled, then a2 is added head-to-tail to reach b.
-        right_title = Text("Column picture: build b from columns", font=FONT,
-                           font_size=24, color=WHITE).move_to(RIGHT * 3.45 + UP * 2.35)
+        # Column picture, algebra first: distinguish vector x from scalar weights.
+        col_alg_title = heading("Column picture — algebra").to_edge(UP, buff=0.4)
+        product = MathTex(r"A", r"\mathbf{x}", "=", "x", r"a_1", "+", "y", r"a_2", "=", "b",
+                          font_size=54).move_to(UP * 0.8)
+        for part, color in [(0, BLUE), (1, GOLD), (4, BLUE), (7, GOLD), (9, GREEN)]:
+            product[part].set_color(color)
+        product_note = VGroup(
+            MathTex(r"a_1=\begin{bmatrix}2\\1\end{bmatrix}", color=BLUE, font_size=34),
+            MathTex(r"a_2=\begin{bmatrix}1\\-1\end{bmatrix}", color=GOLD, font_size=34),
+            Text("For this solution, x = 2 and y = 1 are the weights.",
+                 font=FONT, font_size=25, color=MUTED),
+        ).arrange(DOWN, buff=0.3).next_to(product, DOWN, buff=0.55)
+        weights = MathTex("2a_1", "+", "a_2", "=", "b", font_size=48).next_to(product_note, DOWN, buff=0.45)
+        weights[0].set_color(BLUE)
+        weights[2].set_color(GOLD)
+        weights[4].set_color(GREEN)
+        self.play(FadeIn(col_alg_title), Write(product))
+        self.play(Write(product_note), Write(weights))
+        self.wait(9)
+        self.play(FadeOut(col_alg_title), FadeOut(product), FadeOut(product_note), FadeOut(weights))
+
+        # Full-screen vector construction: 2a1 followed head-to-tail by a2.
+        col_title = heading("Column picture — vector sum").to_edge(UP, buff=0.4)
         c_axes = Axes(
-            x_range=(0, 6, 1), y_range=(-2, 4, 1), x_length=4.8, y_length=3.2,
-            axis_config={"color": MUTED, "include_numbers": True, "font_size": 20,
+            x_range=(0, 6, 1), y_range=(-2, 4, 1), x_length=5.0, y_length=5.0,
+            axis_config={"color": MUTED, "include_numbers": True, "font_size": 21,
                          "stroke_width": 2}, tips=True,
-        ).move_to(RIGHT * 3.35 + DOWN * 0.55)
+        ).move_to(DOWN * 0.45)
         col_legend = VGroup(
-            MathTex(r"a_1=(2,1)", color=BLUE, font_size=22),
-            MathTex(r"a_2=(1,-1)", color=GOLD, font_size=22),
-            MathTex(r"b=(5,1)", color=GREEN, font_size=22),
-        ).arrange(RIGHT, buff=0.18).move_to(RIGHT * 3.35 + UP * 1.65)
-        self.play(FadeIn(right_title), FadeIn(col_legend), Create(c_axes))
-
-        start = c_axes.c2p(0, 0)
-        doubled_end = c_axes.c2p(4, 2)
-        b_end = c_axes.c2p(5, 1)
-        vec_a1 = Arrow(start, doubled_end, buff=0, color=BLUE, stroke_width=6, max_tip_length_to_length_ratio=0.12)
-        vec_a2 = Arrow(doubled_end, b_end, buff=0, color=GOLD, stroke_width=6, max_tip_length_to_length_ratio=0.3)
-        vec_b = Arrow(start, b_end, buff=0, color=GREEN, stroke_width=4, max_tip_length_to_length_ratio=0.12)
-        a1_label = MathTex(r"2a_1=(4,2)", color=BLUE, font_size=24).move_to(c_axes.c2p(2.8, 2.6))
-        a2_label = MathTex(r"a_2=(1,-1)", color=GOLD, font_size=24).move_to(c_axes.c2p(5.4, 2.1))
-        b_label = MathTex(r"b=(5,1)", color=GREEN, font_size=24).move_to(c_axes.c2p(4.6, 0.35))
-        self.play(GrowArrow(vec_a1), FadeIn(a1_label))
+            MathTex(r"a_1=(2,1)", color=BLUE, font_size=26),
+            MathTex(r"a_2=(1,-1)", color=GOLD, font_size=26),
+            MathTex(r"b=(5,1)", color=GREEN, font_size=26),
+        ).arrange(RIGHT, buff=0.6).move_to(UP * 2.5)
+        start, doubled_end, b_end = c_axes.c2p(0, 0), c_axes.c2p(4, 2), c_axes.c2p(5, 1)
+        vec_a1 = Arrow(start, doubled_end, buff=0, color=BLUE, stroke_width=7)
+        vec_a2 = Arrow(doubled_end, b_end, buff=0, color=GOLD, stroke_width=7)
+        vec_b = Arrow(start, b_end, buff=0, color=GREEN, stroke_width=5)
+        scale_label = MathTex(r"2a_1=(4,2)", color=BLUE, font_size=27).move_to(c_axes.c2p(2.4, 2.8))
+        a2_label = MathTex(r"a_2=(1,-1)", color=GOLD, font_size=26).move_to(c_axes.c2p(5.1, 2.0))
+        b_label = MathTex(r"b=(5,1)", color=GREEN, font_size=26).move_to(c_axes.c2p(4.5, 0.2))
+        sum_eq = MathTex(r"2a_1", "+", r"a_2", "=", "b", font_size=38).to_edge(DOWN, buff=0.2)
+        sum_eq[0].set_color(BLUE)
+        sum_eq[2].set_color(GOLD)
+        sum_eq[4].set_color(GREEN)
+        self.play(FadeIn(col_title), FadeIn(col_legend), Create(c_axes))
+        self.play(GrowArrow(vec_a1), FadeIn(scale_label))
         self.play(GrowArrow(vec_a2), FadeIn(a2_label))
-        self.play(GrowArrow(vec_b), FadeIn(b_label))
-        equation = MathTex(r"2a_1", "+", r"a_2", "=", "b", font_size=38).to_edge(DOWN, buff=0.28)
-        equation[0].set_color(BLUE)
-        equation[2].set_color(GOLD)
-        equation[4].set_color(GREEN)
-        self.play(Write(equation))
-        self.wait(48)  # Narration covers the row picture and column construction.
+        self.play(GrowArrow(vec_b), FadeIn(b_label), Write(sum_eq))
+        self.wait(9.9)  # Shift Scene 4 and its narration one second later.
 
 
 class GaussianElimination(Scene):
     """Show each elementary row operation and preserve every intermediate."""
 
     def construct(self):
-        title = heading("Solve it with Gaussian elimination").to_edge(UP, buff=0.38)
+        title = heading("Solve it with Gauss–Jordan elimination").to_edge(UP, buff=0.38)
         self.play(FadeIn(title))
 
         matrices = [
@@ -241,7 +280,7 @@ class GaussianElimination(Scene):
         ]
         operations = [
             r"\text{Starting augmented matrix}",
-            r"R_1 \leftrightarrow R_2  \quad\text{(swap rows)}",
+            r"R_1 \leftrightarrow R_2  \quad\text{(put 1 in the first pivot)}",
             r"R_2 \to R_2-2R_1  \quad\text{(eliminate }x\text{ below pivot)}",
             r"R_2 \to \frac{1}{3}R_2  \quad\text{(make pivot one)}",
             r"R_1 \to R_1+R_2  \quad\text{(eliminate }y\text{ above pivot)}",
@@ -249,7 +288,7 @@ class GaussianElimination(Scene):
         op_text = MathTex(operations[0], font_size=34, color=CYAN).move_to(UP * 1.2)
         current = matrices[0].move_to(ORIGIN + DOWN * 0.15)
         self.play(FadeIn(op_text), Write(current))
-        self.wait(1.2)
+        self.wait(5.9)  # Keep the starting augmented matrix visible until 1:51 overall.
 
         for index in range(1, len(matrices)):
             new_op = MathTex(operations[index], font_size=32, color=CYAN).move_to(op_text)
@@ -259,7 +298,14 @@ class GaussianElimination(Scene):
             self.play(Transform(op_text, new_op), ReplacementTransform(current, new_matrix))
             current = new_matrix
             self.play(Indicate(current, color=GOLD, scale_factor=1.04))
-            self.wait(1.15)
+            if index == 1:
+                self.wait(8.0)  # Hold the row swap through 2:01 overall.
+            elif index == 2:
+                self.wait(8.0)  # Hold R2 - 2R1 through 2:11 overall.
+            elif index == 3:
+                self.wait(2.0)  # Hold the scaled row through 2:15 overall.
+            else:
+                self.wait(12.2)  # Leave the remaining elimination timing unchanged for now.
 
         answer = MathTex(r"x=2,\qquad y=1", font_size=48, color=CYAN).to_edge(DOWN, buff=0.4)
         self.play(Write(answer))
@@ -269,42 +315,96 @@ class GaussianElimination(Scene):
         check = MathTex(r"2(2)+1=5\qquad\checkmark\qquad 2-1=1\qquad\checkmark",
                         font_size=36, color=GREEN).move_to(DOWN * 2.0)
         self.play(FadeIn(check_head), Write(check))
-        self.wait(48)  # Pause for the narrated verification of both equations.
+        self.wait(5.6)  # Keep Scene 5's outcomes page anchored at 2:40.
 
 
 class SolutionCases(Scene):
-    """Compare the three geometric outcomes and the determinant test."""
+    """Use one coefficient matrix to compare consistency and rank."""
 
     def construct(self):
-        title = heading("Three possible solution cases").to_edge(UP, buff=0.35)
-        self.play(FadeIn(title))
-        specs = [
-            ("One solution", "Intersecting", lambda x: 0.7*x+1, lambda x: -0.8*x+2.5, CYAN),
-            ("No solution", "Parallel", lambda x: 0.65*x+1.4, lambda x: 0.65*x-0.3, RED),
-            ("Infinitely many", "Coincident", lambda x: 0.55*x+1, lambda x: 0.55*x+1, GREEN),
-        ]
-        centers = [LEFT * 4.15, ORIGIN, RIGHT * 4.15]
-        for i, (caption, sub, f1, f2, color) in enumerate(specs):
-            mini = Axes(
-                x_range=(-2, 2.5, 1), y_range=(-1, 4, 1), x_length=3.55, y_length=2.65,
-                axis_config={"color": MUTED, "stroke_width": 1.6, "include_numbers": False},
-                tips=True,
-            ).move_to(centers[i] + DOWN * 0.2)
-            a = mini.plot(f1, x_range=(-1.8, 2.2), color=BLUE, stroke_width=4)
-            b = mini.plot(f2, x_range=(-1.8, 2.2), color=GOLD, stroke_width=4)
-            cap = Text(caption, font=FONT, font_size=24, color=color, weight=MEDIUM)
-            cap.move_to(centers[i] + UP * 1.85)
-            subcap = Text(sub, font=FONT, font_size=20, color=MUTED).next_to(cap, DOWN, buff=0.12)
-            self.play(Create(mini), Create(a), Create(b), FadeIn(cap), FadeIn(subcap), run_time=0.8)
+        title = heading("Three solution outcomes").to_edge(UP, buff=0.38)
+        self.play(FadeIn(title), run_time=0.5)
+        self.wait(1.0)  # Outcomes title is visible for exactly 1.5 seconds.
+        self.play(FadeOut(title), run_time=0.5)
+        self.wait(1.0)  # Leave the requested 1.5-second gap before the unique case.
 
-        determinant = MathTex(r"\det(A)=2(-1)-1(1)=-3\ne0", font_size=42, color=CYAN)
-        determinant.move_to(DOWN * 2.25)
-        note = Text("For a square system: nonzero determinant → unique solution.",
-                    font=FONT, font_size=23, color=WHITE).next_to(determinant, DOWN, buff=0.22)
-        note2 = Text("Zero determinant → inconsistent or infinitely many solutions.",
-                     font=FONT, font_size=22, color=MUTED).next_to(note, DOWN, buff=0.15)
-        self.play(Write(determinant), FadeIn(note), FadeIn(note2))
-        self.wait(39)  # Let the three cases and determinant distinction register.
+        cases = [
+            {
+                "name": "Unique solution", "color": CYAN,
+                "system": r"2x+y=5\quad x-y=1",
+                "row": r"\det(A)=-3\ne0",
+                "rank": r"\operatorname{rank}(A)=\operatorname{rank}([A|b])=2=n",
+                "meaning": "The lines meet once: (2,1).",
+                "lines": (lambda x: 5-2*x, lambda x: x-1, (2, 1)),
+            },
+            {
+                "name": "Infinitely many solutions", "color": GREEN,
+                "system": r"2x+y=5\quad 4x+2y=10",
+                "row": r"R_2-2R_1:\ [0\quad0\mid0]",
+                "rank": r"\operatorname{rank}(A)=\operatorname{rank}([A|b])=1<2",
+                "meaning": "The equations are the same line; det(A)=0.",
+                "lines": (lambda x: 5-2*x, lambda x: 5-2*x, None),
+            },
+            {
+                "name": "No solution", "color": RED,
+                "system": r"2x+y=5\quad 4x+2y=7",
+                "row": r"R_2-2R_1:\ [0\quad0\mid-3]\quad(0=-3)",
+                "rank": r"\operatorname{rank}(A)=1<\operatorname{rank}([A|b])=2",
+                "meaning": "Parallel distinct lines; det(A)=0 again.",
+                "lines": (lambda x: 5-2*x, lambda x: 7/2-2*x, None),
+            },
+        ]
+
+        for index, case in enumerate(cases):
+            if index > 0:
+                self.play(FadeOut(*self.mobjects), run_time=0.5)
+                if index == 1:
+                    self.wait(0.5)  # Infinite-solutions page begins at 2:58.
+            title = heading(case["name"], size=39, color=case["color"]).to_edge(UP, buff=0.38)
+            eq = MathTex(case["system"], font_size=39, color=WHITE).move_to(UP * 1.65)
+            axes = Axes(
+                x_range=(-1, 4, 1), y_range=(-2, 6, 1), x_length=3.4, y_length=5.44,
+                axis_config={"color": MUTED, "stroke_width": 1.7, "include_numbers": True,
+                             "font_size": 17}, tips=True,
+            ).move_to(LEFT * 3.25 + DOWN * 0.65)
+            f1, f2, solution = case["lines"]
+            line_x_range = (-0.5, 2.7) if case["name"] == "No solution" else (-0.5, 3.3)
+            l1 = axes.plot(f1, x_range=line_x_range, color=BLUE, stroke_width=5)
+            l2 = axes.plot(f2, x_range=line_x_range, color=GOLD, stroke_width=4)
+            if case["name"] == "Infinitely many solutions":
+                l2 = DashedVMobject(l2, num_dashes=25)
+            math_rows = VGroup(
+                MathTex(case["row"], font_size=29, color=case["color"]),
+                MathTex(case["rank"], font_size=27, color=WHITE),
+            ).arrange(DOWN, aligned_edge=LEFT, buff=0.48).move_to(RIGHT * 2.55 + UP * 0.4)
+            note = Text(case["meaning"], font=FONT, font_size=24, color=MUTED)
+            note.move_to(RIGHT * 2.55 + DOWN * 1.2)
+            det_note = Text("det(A)=0 in both cases; it cannot distinguish them.",
+                            font=FONT, font_size=18, color=CYAN).move_to(RIGHT * 3.2 + DOWN * 2.55)
+            self.play(FadeIn(title), Write(eq), Create(axes), Create(l1), Create(l2), run_time=0.5)
+            if solution:
+                dot = Dot(axes.c2p(*solution), color=CYAN, radius=0.08)
+                self.play(FadeIn(dot, scale=0.5), run_time=0.5)
+            self.play(Write(math_rows), FadeIn(note), run_time=0.5)
+            if case["name"] == "No solution":
+                self.play(FadeIn(det_note), run_time=0.5)
+            if case["name"] == "Unique solution":
+                self.wait(12.5)  # Unique case remains through 2:57.
+            elif case["name"] == "Infinitely many solutions":
+                self.wait(18.5)  # Infinite case remains through 3:17.5.
+            else:
+                self.wait(17.5)  # End the no-solution case at 3:37.
+        self.play(FadeOut(*self.mobjects))
+        conclusion_title = heading("Why determinant zero is not enough", size=38, color=CYAN).to_edge(UP, buff=0.45)
+        conclusion = VGroup(
+            MathTex(r"\det(A)=0\quad\text{in both singular examples}", font_size=39, color=WHITE),
+            MathTex(r"[0\quad0\mid0]\Rightarrow\text{ infinitely many solutions}", font_size=35, color=GREEN),
+            MathTex(r"[0\quad0\mid-3]\Rightarrow\text{ no solution}", font_size=35, color=RED),
+            Text("The row result or rank comparison distinguishes them.",
+                 font=FONT, font_size=27, color=MUTED),
+        ).arrange(DOWN, buff=0.48).move_to(DOWN * 0.2)
+        self.play(FadeIn(conclusion_title), LaggedStart(*[Write(item) for item in conclusion], lag_ratio=0.3), run_time=2)
+        self.wait(12)  # Keep Scene 6 anchored at 3:52 after the earlier handoff.
 
 
 class SummaryCredits(Scene):
